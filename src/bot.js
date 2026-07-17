@@ -13,6 +13,16 @@ function nowMY() {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // --- Command Router ---
+/**
+ * Main command router for incoming WhatsApp messages.
+ * Parses the command and executes the corresponding handler function.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} text - The full text of the incoming message.
+ * @param {string} waGroupId - The WhatsApp group ID (or phone number if private).
+ * @param {boolean} isGroup - Indicates if the message was sent in a group chat.
+ * @param {string} groupName - The name of the WhatsApp group (if applicable).
+ * @returns {Promise<any>} The result of the command handler, or null if unknown command.
+ */
 export async function handleCommand(phone, text, waGroupId, isGroup, groupName) {
   const cmd = text.trim().toLowerCase().split(/\s+/)[0];
 
@@ -36,6 +46,14 @@ export async function handleCommand(phone, text, waGroupId, isGroup, groupName) 
   return null; // Unknown command — ignore
 }
 
+/**
+ * Handles the '/mulai_arisan' command to create a new arisan group.
+ * @param {string} phone - The phone number of the creator.
+ * @param {string} text - The full command text.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @param {string} groupName - The name of the WhatsApp group.
+ * @returns {Promise<void>}
+ */
 async function handleMulaiArisan(phone, text, waGroupId, groupName) {
   const parts = text.trim().split(/\s+/);
   const nominal = parseInt(parts[1]) || 100000;
@@ -55,6 +73,13 @@ async function handleMulaiArisan(phone, text, waGroupId, groupName) {
   );
 }
 
+/**
+ * Handles the '/tambah_anggota' command to add new members to the arisan.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} text - The full command text containing member names.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleTambahAnggota(phone, text, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return sendMessage(phone, '❌ Arisan belum dibuat. Ketik /mulai_arisan dulu.');
@@ -79,6 +104,13 @@ async function handleTambahAnggota(phone, text, waGroupId) {
   }
 }
 
+/**
+ * Handles the '/hapus_anggota' command to remove a member from the arisan.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} text - The full command text containing the member name.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleHapusAnggota(phone, text, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return sendMessage(phone, '❌ Arisan belum dibuat.');
@@ -94,6 +126,13 @@ async function handleHapusAnggota(phone, text, waGroupId) {
   }
 }
 
+/**
+ * Handles the '/kocok' command to randomly draw a winner for the current month.
+ * Ensures that past winners are not drawn again until all members have won, then resets.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleKocok(phone, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return sendMessage(phone, '❌ Arisan belum dibuat.');
@@ -136,6 +175,13 @@ async function handleKocok(phone, waGroupId) {
   );
 }
 
+/**
+ * Handles the '/bayar' command to mark a specific member as having paid for the current month.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} text - The full command text containing the member name.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleBayar(phone, text, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return;
@@ -155,6 +201,12 @@ async function handleBayar(phone, text, waGroupId) {
   }
 }
 
+/**
+ * Handles the '/rekap' command to display a summary of who has and hasn't paid for the current month.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleRekap(phone, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return sendMessage(phone, '❌ Arisan belum dibuat.');
@@ -181,6 +233,12 @@ async function handleRekap(phone, waGroupId) {
   );
 }
 
+/**
+ * Handles the '/status' command to show the current status and settings of the arisan.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} waGroupId - The WhatsApp group ID.
+ * @returns {Promise<void|any>}
+ */
 async function handleStatus(phone, waGroupId) {
   const group = await db.getGroupByWaId(waGroupId);
   if (!group) return sendMessage(phone, '❌ Arisan belum dibuat di grup ini.');
@@ -201,6 +259,11 @@ async function handleStatus(phone, waGroupId) {
   );
 }
 
+/**
+ * Handles the '/help' command to display the available bot commands.
+ * @param {string} phone - The phone number to send the help message to.
+ * @returns {Promise<void>}
+ */
 async function sendHelp(phone) {
   await sendMessage(phone,
     `📒 *Arisano — Bot Arisan WhatsApp*\n\n` +
